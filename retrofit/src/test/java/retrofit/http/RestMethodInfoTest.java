@@ -15,7 +15,7 @@ import retrofit.http.mime.TypedOutput;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static retrofit.http.RestMethodInfo.NO_SINGLE_ENTITY;
+import static retrofit.http.RestMethodInfo.NO_REQUEST_BODY_OBJECT;
 
 public class RestMethodInfoTest {
   @Test public void pathParameterParsing() throws Exception {
@@ -448,7 +448,7 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).isEmpty();
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
@@ -464,7 +464,7 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(1).containsSequence("a");
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
@@ -480,7 +480,7 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(3).containsSequence("a", "b", "c");
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
@@ -495,7 +495,7 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).isEmpty();
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
@@ -510,7 +510,7 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(1).containsSequence("a");
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
@@ -525,13 +525,13 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(2).containsSequence("a", "b");
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(NO_SINGLE_ENTITY);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(NO_REQUEST_BODY_OBJECT);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test public void singleEntity() {
     class Example {
-      @PUT("/") Response a(@SingleEntity Object o) {
+      @PUT("/") Response a(Object o) {
         return null;
       }
     }
@@ -542,13 +542,13 @@ public class RestMethodInfoTest {
 
     assertThat(methodInfo.namedParams).hasSize(1);
     assertThat(methodInfo.namedParams[0]).isNull();
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(0);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(0);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test public void singleEntityTypedBytes() {
     class Example {
-      @PUT("/") Response a(@SingleEntity TypedOutput o) {
+      @PUT("/") Response a(TypedOutput o) {
         return null;
       }
     }
@@ -559,13 +559,13 @@ public class RestMethodInfoTest {
 
     assertThat(methodInfo.namedParams).hasSize(1);
     assertThat(methodInfo.namedParams[0]).isNull();
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(0);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(0);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test public void singleEntityWithCallback() {
     class Example {
-      @PUT("/") void a(@SingleEntity Object o, ResponseCallback cb) {
+      @PUT("/") void a(Object o, ResponseCallback cb) {
       }
     }
 
@@ -575,14 +575,14 @@ public class RestMethodInfoTest {
 
     assertThat(methodInfo.namedParams).hasSize(1);
     assertThat(methodInfo.namedParams[0]).isNull();
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(0);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(0);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test(expected = IllegalStateException.class)
   public void twoSingleEntities() {
     class Example {
-      @PUT("/") Response a(@SingleEntity int o1, @SingleEntity int o2) {
+      @PUT("/") Response a(int o1, int o2) {
         return null;
       }
     }
@@ -594,7 +594,7 @@ public class RestMethodInfoTest {
 
   @Test public void singleEntityWithNamed() {
     class Example {
-      @PUT("/{a}/{c}") Response a(@Name("a") int a, @SingleEntity int b, @Name("c") int c) {
+      @PUT("/{a}/{c}") Response a(@Name("a") int a, int b, @Name("c") int c) {
         return null;
       }
     }
@@ -603,13 +603,13 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(3).containsSequence("a", null, "c");
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(1);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(1);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test public void singleEntityWithNamedAndCallback() {
     class Example {
-      @PUT("/{a}") void a(@Name("a") int a, @SingleEntity int b, ResponseCallback cb) {
+      @PUT("/{a}") void a(@Name("a") int a, int b, ResponseCallback cb) {
       }
     }
 
@@ -618,14 +618,14 @@ public class RestMethodInfoTest {
     methodInfo.init();
 
     assertThat(methodInfo.namedParams).hasSize(2).containsSequence("a", null);
-    assertThat(methodInfo.singleEntityArgumentIndex).isEqualTo(1);
+    assertThat(methodInfo.requestBodyObjectIndex).isEqualTo(1);
     assertThat(methodInfo.isMultipart).isFalse();
   }
 
   @Test(expected = IllegalStateException.class)
   public void nonPathParamAndSingleEntity() {
     class Example {
-      @PUT("/") Response a(@Name("a") int a, @SingleEntity int b) {
+      @PUT("/") Response a(@Name("a") int a, int b) {
         return null;
       }
     }
@@ -649,9 +649,9 @@ public class RestMethodInfoTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void pathParamNonPathParamAndTypedBytes() {
+  public void pathParamNonPathParamAndSingleEntity() {
     class Example {
-      @PUT("/{a}") Response a(@Name("a") int a, @Name("b") int b, @SingleEntity int c) {
+      @PUT("/{a}") Response a(@Name("a") int a, @Name("b") int b, int c) {
         return null;
       }
     }
@@ -677,7 +677,7 @@ public class RestMethodInfoTest {
   @Test(expected = IllegalStateException.class)
   public void nonBodyHttpMethodWithSingleEntity() {
     class Example {
-      @GET("/") Response a(@SingleEntity Object o) {
+      @GET("/") Response a(Object o) {
         return null;
       }
     }

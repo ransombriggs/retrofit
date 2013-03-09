@@ -21,7 +21,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static retrofit.http.MultipartTypedOutput.TypedOutputBody;
-import static retrofit.http.RestMethodInfo.NO_SINGLE_ENTITY;
+import static retrofit.http.RestMethodInfo.NO_REQUEST_BODY_OBJECT;
 
 public class RequestBuilderTest {
   @Test public void normalGet() throws Exception {
@@ -76,7 +76,7 @@ public class RequestBuilderTest {
     assertThat(request.getUrl()).isEqualTo("http://example.com/foo/bar/pong/?kit=kat&riff=raff");
     assertThat(request.getBody()).isNull();
   }
-  
+
   @Test public void getWithPathAndQueryQuestionMarkParam() throws Exception {
     Request request = new Helper() //
         .setMethod("GET") //
@@ -90,7 +90,7 @@ public class RequestBuilderTest {
     assertThat(request.getUrl()).isEqualTo("http://example.com/foo/bar/pong%3F/?kit=kat%3F");
     assertThat(request.getBody()).isNull();
   }
-  
+
   @Test public void getWithPathAndQueryAmpersandParam() throws Exception {
     Request request = new Helper() //
         .setMethod("GET") //
@@ -104,7 +104,7 @@ public class RequestBuilderTest {
     assertThat(request.getUrl()).isEqualTo("http://example.com/foo/bar/pong%26/?kit=kat%26");
     assertThat(request.getBody()).isNull();
   }
-  
+
   @Test public void getWithPathAndQueryHashParam() throws Exception {
     Request request = new Helper() //
         .setMethod("GET") //
@@ -280,7 +280,7 @@ public class RequestBuilderTest {
     private final List<String> namedParams = new ArrayList<String>();
     private final List<Object> args = new ArrayList<Object>();
     private final List<Header> headers = new ArrayList<Header>();
-    private int singleEntityArgumentIndex = NO_SINGLE_ENTITY;
+    private int singleEntityArgumentIndex = NO_REQUEST_BODY_OBJECT;
     private String url;
 
     Helper setAsynchronous() {
@@ -322,7 +322,7 @@ public class RequestBuilderTest {
     }
 
     Helper addSingleEntityParam(Object value) {
-      if (singleEntityArgumentIndex != NO_SINGLE_ENTITY) {
+      if (singleEntityArgumentIndex != NO_REQUEST_BODY_OBJECT) {
         throw new IllegalStateException("Single entity param already added.");
       }
       singleEntityArgumentIndex = namedParams.size(); // Relying on the fact that this is already less one.
@@ -373,7 +373,7 @@ public class RequestBuilderTest {
       methodInfo.pathParams = pathParams;
       methodInfo.pathQueryParams = queryParams.toArray(new QueryParam[queryParams.size()]);
       methodInfo.namedParams = namedParams.toArray(new String[namedParams.size()]);
-      methodInfo.singleEntityArgumentIndex = singleEntityArgumentIndex;
+      methodInfo.requestBodyObjectIndex = singleEntityArgumentIndex;
       methodInfo.isMultipart = isMultipart;
       methodInfo.loaded = true;
 

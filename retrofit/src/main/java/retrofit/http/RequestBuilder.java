@@ -11,7 +11,7 @@ import retrofit.http.client.Request;
 import retrofit.http.mime.TypedOutput;
 import retrofit.http.mime.TypedString;
 
-import static retrofit.http.RestMethodInfo.NO_SINGLE_ENTITY;
+import static retrofit.http.RestMethodInfo.NO_REQUEST_BODY_OBJECT;
 
 /**
  * Builds HTTP requests from Java method invocations.  Handles "path parameters" in the
@@ -61,7 +61,7 @@ final class RequestBuilder {
 
     // Add arguments as parameters.
     String[] pathNamedParams = methodInfo.namedParams;
-    int singleEntityArgumentIndex = methodInfo.singleEntityArgumentIndex;
+    int singleEntityArgumentIndex = methodInfo.requestBodyObjectIndex;
     for (int i = 0; i < pathNamedParams.length; i++) {
       Object arg = args[i];
       if (arg == null) continue;
@@ -96,7 +96,7 @@ final class RequestBuilder {
       }
     }
 
-    if (methodInfo.singleEntityArgumentIndex != NO_SINGLE_ENTITY) {
+    if (methodInfo.requestBodyObjectIndex != NO_REQUEST_BODY_OBJECT) {
       // We're passing a JSON object as the entity: paramList should only contain path param values.
       if (!paramList.isEmpty()) {
         throw new IllegalStateException(
@@ -141,12 +141,12 @@ final class RequestBuilder {
       } else {
         body = converter.toBody(paramList);
       }
-    } else if (methodInfo.singleEntityArgumentIndex != NO_SINGLE_ENTITY) {
-      Object singleEntity = args[methodInfo.singleEntityArgumentIndex];
-      if (singleEntity instanceof TypedOutput) {
-        body = (TypedOutput) singleEntity;
+    } else if (methodInfo.requestBodyObjectIndex != NO_REQUEST_BODY_OBJECT) {
+      Object requestBodyObject = args[methodInfo.requestBodyObjectIndex];
+      if (requestBodyObject instanceof TypedOutput) {
+        body = (TypedOutput) requestBodyObject;
       } else {
-        body = converter.toBody(singleEntity);
+        body = converter.toBody(requestBodyObject);
       }
     }
 

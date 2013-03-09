@@ -14,7 +14,7 @@ import retrofit.http.mime.TypedOutput;
 
 /** Cached details about an interface method. */
 final class RestMethodInfo {
-  static final int NO_SINGLE_ENTITY = -1;
+  static final int NO_REQUEST_BODY_OBJECT = -1;
   private static final Pattern PATH_PARAMETERS = Pattern.compile("\\{([a-z_-]+)\\}");
 
   final Method method;
@@ -28,7 +28,7 @@ final class RestMethodInfo {
   Set<String> pathParams;
   QueryParam[] pathQueryParams;
   String[] namedParams;
-  int singleEntityArgumentIndex = NO_SINGLE_ENTITY;
+  int requestBodyObjectIndex = NO_REQUEST_BODY_OBJECT;
   boolean isMultipart = false;
 
   RestMethodInfo(Method method) {
@@ -168,7 +168,7 @@ final class RestMethodInfo {
   }
 
   /**
-   * Loads {@link #namedParams}, {@link #singleEntityArgumentIndex}. Must be called after
+   * Loads {@link #namedParams}, {@link #requestBodyObjectIndex}. Must be called after
    * {@link #parseMethodAnnotations()}}.
    */
   private void parseParameters() {
@@ -184,38 +184,38 @@ final class RestMethodInfo {
       Class<?> parameterType = parameterTypes[i];
       Annotation[] parameterAnnotations = parameterAnnotationArrays[i];
       if (parameterAnnotations == null || parameterAnnotations.length == 0) {
-        throw new IllegalStateException("Argument " + i + " lacks annotation.");
-      }
-      for (Annotation parameterAnnotation : parameterAnnotations) {
-        Class<? extends Annotation> annotationType = parameterAnnotation.annotationType();
-        if (annotationType == Name.class) {
-          String name = ((Name) parameterAnnotation).value();
-          namedParams[i] = name;
-          boolean isPathParam = pathParams.contains(name);
-          if (parameterType == TypedOutput.class && (isPathParam || !restMethod.hasBody())) {
-            throw new IllegalStateException("TypedOutput cannot be used as URL parameter.");
-          }
-          if (!isPathParam && !isMultipart && restMethod.hasBody()) {
-            throw new IllegalStateException(
-                "Non-path params can only be used in multipart request.");
-          }
-        } else if (annotationType == SingleEntity.class) {
-          if (isMultipart) {
-            throw new IllegalStateException("SingleEntity cannot be used with multipart request.");
-          }
-          if (singleEntityArgumentIndex != NO_SINGLE_ENTITY) {
-            throw new IllegalStateException(
-                "Method annotated with multiple SingleEntity method annotations: " + method);
-          }
-          singleEntityArgumentIndex = i;
-        } else {
+        if (isMultipart) {
           throw new IllegalStateException(
-              "Argument " + i + " has invalid annotation " + annotationType + ": " + method);
+              "Request body object cannot be used with multipart request.");
+        }
+        if (requestBodyObjectIndex != NO_REQUEST_BODY_OBJECT) {
+          throw new IllegalStateException(
+              "Method contains multiple request body objects method: " + method);
+        }
+        requestBodyObjectIndex = i;
+      } else {
+        for (Annotation parameterAnnotation : parameterAnnotations) {
+          Class<? extends Annotation> annotationType = parameterAnnotation.annotationType();
+          if (annotationType == Name.class) {
+            String name = ((Name) parameterAnnotation).value();
+            namedParams[i] = name;
+            boolean isPathParam = pathParams.contains(name);
+            if (parameterType == TypedOutput.class && (isPathParam || !restMethod.hasBody())) {
+              throw new IllegalStateException("TypedOutput cannot be used as URL parameter.");
+            }
+            if (!isPathParam && !isMultipart && restMethod.hasBody()) {
+              throw new IllegalStateException(
+                  "Non-path params can only be used in multipart request.");
+            }
+          } else {
+            throw new IllegalStateException(
+                "Argument " + i + " has invalid annotation " + annotationType + ": " + method);
+          }
         }
       }
     }
     // Check for single entity + non-path parameters.
-    if (singleEntityArgumentIndex != NO_SINGLE_ENTITY) {
+    if (requestBodyObjectIndex != NO_REQUEST_BODY_OBJECT) {
       for (String namedParam : namedParams) {
         if (namedParam != null && !pathParams.contains(namedParam)) {
           throw new IllegalStateException(
@@ -223,7 +223,7 @@ final class RestMethodInfo {
         }
       }
     }
-    if (!restMethod.hasBody() && (isMultipart || singleEntityArgumentIndex != NO_SINGLE_ENTITY)) {
+    if (!restMethod.hasBody() && (isMultipart || requestBodyObjectIndex != NO_REQUEST_BODY_OBJECT)) {
       throw new IllegalStateException(
           "Non-body HTTP method cannot contain @SingleEntity or @TypedOutput.");
     }
