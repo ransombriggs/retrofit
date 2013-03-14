@@ -42,6 +42,15 @@ public class RetrofitError extends RuntimeException {
     this.exception = exception;
   }
 
+  @Override
+  public String getMessage() {
+    if (this.getException() != null) {
+      return this.getException().getMessage();
+    } else {
+      return "Bad Response: " + response.getReason();
+    }
+  }
+
   /** The request URL which produced the error. */
   public String getUrl() {
     return url;
