@@ -12,10 +12,12 @@ import java.util.concurrent.Executor;
 abstract class CallbackRunnable<T> implements Runnable {
   private final Callback<T> callback;
   private final Executor callbackExecutor;
+  private final ErrorHandler errorHandler;
 
-  CallbackRunnable(Callback<T> callback, Executor callbackExecutor) {
+  CallbackRunnable(Callback<T> callback, Executor callbackExecutor, ErrorHandler errorHandler) {
     this.callback = callback;
     this.callbackExecutor = callbackExecutor;
+    this.errorHandler = errorHandler;
   }
 
   @SuppressWarnings("unchecked")
@@ -30,7 +32,7 @@ abstract class CallbackRunnable<T> implements Runnable {
     } catch (final RetrofitError e) {
       callbackExecutor.execute(new Runnable() {
         @Override public void run() {
-          callback.failure(e);
+          errorHandler.handleErrorCallback(e, callback);
         }
       });
     }
