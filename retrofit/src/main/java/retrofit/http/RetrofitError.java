@@ -43,8 +43,8 @@ public class RetrofitError extends RuntimeException {
 
   @Override
   public String getMessage() {
-    if (this.getException() != null) {
-      return this.getException().getMessage();
+    if (this.getCause() != null) {
+      return this.getCause().getMessage();
     } else {
       return "Bad Response: " + response.getReason();
     }
