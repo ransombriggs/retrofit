@@ -20,7 +20,7 @@ public class CallbackRunnableTest {
 
   @Before public void setUp() {
     callback = mock(Callback.class);
-    callbackRunnable = spy(new CallbackRunnable<Object>(callback, executor) {
+    callbackRunnable = spy(new CallbackRunnable<Object>(callback, executor, ErrorHandler.DEFAULT) {
       @Override public ResponseWrapper obtainResponse() {
         return null; // Must be mocked.
       }

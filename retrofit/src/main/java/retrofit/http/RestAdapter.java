@@ -41,9 +41,10 @@ public class RestAdapter {
   private final Headers headers;
   private final Converter converter;
   private final Profiler profiler;
+  private final ErrorHandler errorHandler;
 
   private RestAdapter(Server server, Client.Provider clientProvider, Executor httpExecutor,
-      Executor callbackExecutor, Headers headers, Converter converter, Profiler profiler) {
+      Executor callbackExecutor, Headers headers, Converter converter, Profiler profiler, ErrorHandler errorHandler) {
     this.server = server;
     this.clientProvider = clientProvider;
     this.httpExecutor = httpExecutor;
@@ -51,6 +52,7 @@ public class RestAdapter {
     this.headers = headers;
     this.converter = converter;
     this.profiler = profiler;
+    this.errorHandler = errorHandler;
   }
 
   /**
@@ -99,7 +101,7 @@ public class RestAdapter {
 
     @SuppressWarnings("unchecked") //
     @Override public Object invoke(Object proxy, Method method, final Object[] args)
-        throws InvocationTargetException, IllegalAccessException {
+        throws Throwable {
       // If the method is a method from Object then defer to normal invocation.
       if (method.getDeclaringClass() == Object.class) {
         return method.invoke(this, args);
@@ -117,14 +119,18 @@ public class RestAdapter {
       }
 
       if (methodDetails.isSynchronous) {
-        return invokeRequest(methodDetails, args);
+        try {
+          return invokeRequest(methodDetails, args);
+        } catch (RetrofitError error) {
+          throw errorHandler.handleError(error);
+        }
       }
 
       if (httpExecutor == null || callbackExecutor == null) {
         throw new IllegalStateException("Asynchronous invocation requires calling setExecutors.");
       }
       Callback<?> callback = (Callback<?>) args[args.length - 1];
-      httpExecutor.execute(new CallbackRunnable(callback, callbackExecutor) {
+      httpExecutor.execute(new CallbackRunnable(callback, callbackExecutor, errorHandler) {
         @Override public ResponseWrapper obtainResponse() {
           return (ResponseWrapper) invokeRequest(methodDetails, args);
         }
@@ -279,6 +285,7 @@ public class RestAdapter {
     private Headers headers;
     private Converter converter;
     private Profiler profiler;
+    private ErrorHandler errorHandler;
 
     public Builder setServer(String endpoint) {
       if (endpoint == null) throw new NullPointerException("endpoint");
@@ -340,13 +347,19 @@ public class RestAdapter {
       return this;
     }
 
+    public Builder setErrorHandler(ErrorHandler errorHandler) {
+      if(errorHandler == null) throw new RuntimeException("error handler cannot be null");
+      this.errorHandler = errorHandler;
+      return this;
+    }
+
     public RestAdapter build() {
       if (server == null) {
         throw new IllegalArgumentException("Server may not be null.");
       }
       ensureSaneDefaults();
       return new RestAdapter(server, clientProvider, httpExecutor, callbackExecutor,
-          headers, converter, profiler);
+          headers, converter, profiler, errorHandler);
     }
 
     private void ensureSaneDefaults() {
@@ -364,6 +377,9 @@ public class RestAdapter {
       }
       if (headers == null) {
         headers = Headers.NONE;
+      }
+      if(errorHandler == null) {
+        errorHandler = ErrorHandler.DEFAULT;
       }
     }
   }
